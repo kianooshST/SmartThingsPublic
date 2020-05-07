@@ -1,8 +1,9 @@
 /**
  *	Fibaro Double Switch 2
+ *  Kianoosh: Removed Association Syncing
  */
 metadata {
-	definition (name: "Fibaro Double Switch 2 ZW5", namespace: "FibarGroup", author: "Fibar Group", mnmn: "SmartThings", vid:"generic-switch-power-energy") {
+	definition (name: "ST May 7th: Fibaro Double Switch 2 ZW5", namespace: "FibarGroup", author: "Fibar Group", mnmn: "SmartThings", vid:"generic-switch-power-energy") {
 		capability "Switch"
 		capability "Energy Meter"
 		capability "Power Meter"
@@ -156,7 +157,7 @@ def initialize() {
 	}
 	if (device.currentValue("numberOfButtons") != 6) { sendEvent(name: "numberOfButtons", value: 6) }
 
-	cmds << zwave.multiChannelAssociationV2.multiChannelAssociationGet(groupingIdentifier: 1) //verify if group 1 association is correct  
+	cmds << zwave.multiChannelAssociationV2.multiChannelAssociationSet(groupingIdentifier: 1, nodeId: zwaveHubNodeId)
 	runIn(3, "syncStart")
 	state.lastUpdated = now()
 	response(encapSequence(cmds,1000))
@@ -278,20 +279,6 @@ def zwaveEvent(physicalgraph.zwave.commands.applicationstatusv1.ApplicationRejec
 			break
 		}
 	}
-}
-
-def zwaveEvent(physicalgraph.zwave.commands.multichannelassociationv2.MultiChannelAssociationReport cmd) {
-	def cmds = []
-	if (cmd.groupingIdentifier == 1) {
-		if (cmd.nodeId != [0, zwaveHubNodeId, 1]) {
-			log.debug "${device.displayName} - incorrect MultiChannel Association for Group 1! nodeId: ${cmd.nodeId} will be changed to [0, ${zwaveHubNodeId}, 1]"
-			cmds << zwave.multiChannelAssociationV2.multiChannelAssociationRemove(groupingIdentifier: 1)
-			cmds << zwave.multiChannelAssociationV2.multiChannelAssociationSet(groupingIdentifier: 1, nodeId: [0,zwaveHubNodeId,1])
-		} else {
-			logging("${device.displayName} - MultiChannel Association for Group 1 correct.","info")
-		}
-	}
-	if (cmds) { [response(encapSequence(cmds, 1000))] }
 }
 
 //event handlers
